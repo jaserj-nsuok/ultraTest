@@ -1,0 +1,883 @@
+<!-- Blackboard Ultra accessible test build -->
+<div id="joe-lbp-vignette" lang="en">
+<style>
+        :root {
+            --bg: #0f2237;
+            --bg-dark: #0a1929;
+            --bg-card: #1a3554;
+            --bg-deep: #122944;
+            --teal: #2a9d8f;
+            --teal-light: #3ab8a8;
+            --txt: #f0f6ff;
+            --txt-muted: #94b8d6;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --transition-speed: 350ms;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen { display: none; opacity: 0; transform: translateY(10px); }
+        .screen.active { display: block; animation: fadeSlideIn var(--transition-speed) ease forwards; }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(42, 157, 143, 0.4); }
+            50% { box-shadow: 0 0 16px 4px rgba(42, 157, 143, 0.25); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer-overlay {
+            position: absolute; inset: 0; border-radius: 10px;
+            background: linear-gradient(90deg, transparent 0%, rgba(42,157,143,0.15) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmer 0.6s ease-in-out;
+            pointer-events: none;
+        }
+        .selected-ring { animation: pulseGlow 1s ease-in-out 2; }
+        .progress-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease; }
+        .progress-dot.completed { background: #fff; }
+        .progress-dot.active { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+        .progress-dot.future { background: rgba(148, 184, 214, 0.25); }
+        .pain-bar {
+            height: 12px; border-radius: 6px; position: relative;
+            background: linear-gradient(90deg, #22c55e 0%, #84cc16 20%, #eab308 40%, #f59e0b 60%, #ef4444 80%, #dc2626 100%);
+        }
+        .pain-thumb {
+            width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--red);
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; }
+        .accordion-content.open { max-height: 600px; padding-top: 12px; }
+        .red-flag-card { cursor: pointer; transition: all 0.3s ease; }
+        .red-flag-card:hover { transform: translateY(-2px); }
+        .red-flag-detail { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+        .red-flag-detail.open { max-height: 200px; }
+        .btn-primary {
+            background: var(--teal); color: #fff; padding: 14px 28px; border-radius: 10px; border: none;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(42,157,143,0.3); }
+        .btn-ghost {
+            background: transparent; color: var(--txt-muted); padding: 12px 24px; border-radius: 10px;
+            border: 1px solid rgba(148,184,214,0.25); font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-ghost:hover { border-color: var(--txt-muted); color: var(--txt); }
+        .btn-green { background: var(--green); }
+        .btn-green:hover { background: #16a34a; }
+        .btn-amber { background: var(--amber); color: #1a1a1a; }
+        .btn-amber:hover { background: #d97706; }
+        .btn-red { background: var(--red); }
+        .btn-red:hover { background: #dc2626; }
+        .stat-card {
+            background: var(--bg-deep); border-radius: 12px; padding: 16px 20px;
+            border-left: 4px solid var(--teal); transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .highlight-col { outline: 2px solid var(--teal); outline-offset: -1px; box-shadow: 0 0 20px rgba(42,157,143,0.15); }
+        .progress-bar-top { height: 3px; background: var(--teal); transition: width 0.4s ease; border-radius: 0 2px 2px 0; }
+        .badge-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .doc-badge { display: inline-block; padding: 6px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; background: rgba(42,157,143,0.15); color: var(--teal-light); letter-spacing: 0.5px; }
+        .hero-bg-pattern {
+            position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0.05;
+        }
+        .hero-bg-pattern::before {
+            content: ''; position: absolute; width: 500px; height: 500px; border-radius: 50%;
+            border: 2px solid var(--teal); top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .hero-bg-pattern::after {
+            content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%;
+            border: 1.5px solid var(--teal); top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .speech-bubble {
+            background: var(--bg-deep); border-radius: 16px; padding: 20px 24px; position: relative;
+            border: 1px solid rgba(148,184,214,0.12);
+        }
+        .speech-bubble::before {
+            content: ''; position: absolute; top: -8px; left: 32px;
+            width: 16px; height: 16px; background: var(--bg-deep); transform: rotate(45deg);
+            border-left: 1px solid rgba(148,184,214,0.12); border-top: 1px solid rgba(148,184,214,0.12);
+        }
+        .mono-report {
+            font-family: 'Consolas', 'Courier New', monospace; background: #0d1b2a; border-radius: 12px;
+            padding: 24px; border: 1px solid rgba(148,184,214,0.15); font-size: 0.9rem; line-height: 1.8;
+        }
+        @media (max-width: 640px) {
+            .btn-primary { padding: 12px 22px; font-size: 0.95rem; }
+            .stat-card { padding: 12px 14px; }
+        }
+        .content-scroll { flex: 1; overflow-y: auto; }
+        .table-cell { padding: 12px 16px; border-bottom: 1px solid rgba(148,184,214,0.1); font-size: 0.88rem; }
+    </style>
+<style>
+/* Blackboard Ultra test build: local utility fallbacks (no external CDN required) */
+.hidden{display:none!important}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.items-start{align-items:flex-start}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.text-center{text-align:center}.text-left{text-align:left}.w-full{width:100%}.flex-1{flex:1 1 0%}.flex-shrink-0{flex-shrink:0}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.relative{position:relative}.absolute{position:absolute}.sticky{position:sticky}.top-0{top:0}.z-10{z-index:10}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-4{padding-left:1rem;padding-right:1rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-8{padding-top:2rem;padding-bottom:2rem}.py-12{padding-top:3rem;padding-bottom:3rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.space-y-1> :not([hidden])~:not([hidden]){margin-top:.25rem}.space-y-2> :not([hidden])~:not([hidden]){margin-top:.5rem}.space-y-2\.5> :not([hidden])~:not([hidden]){margin-top:.625rem}.space-y-3> :not([hidden])~:not([hidden]){margin-top:.75rem}.space-y-4> :not([hidden])~:not([hidden]){margin-top:1rem}.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.font-medium{font-weight:500}.font-semibold{font-weight:600}.font-bold{font-weight:700}.italic{font-style:italic}.uppercase{text-transform:uppercase}.tracking-wide{letter-spacing:.025em}.tracking-wider{letter-spacing:.05em}.tracking-widest{letter-spacing:.1em}.leading-tight{line-height:1.25}.leading-relaxed{line-height:1.625}.text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-base{font-size:1rem}.text-lg{font-size:1.125rem}.text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}.text-3xl{font-size:1.875rem}.max-w-xl{max-width:36rem}.min-h-screen{min-height:100vh}.min-h-\[70vh\]{min-height:70vh}.h-14{height:3.5rem}.h-20{height:5rem}.w-20{width:5rem}.w-16{width:4rem}.h-16{height:4rem}.w-12{width:3rem}.h-12{height:3rem}.w-10{width:2.5rem}.h-10{height:2.5rem}.w-8{width:2rem}.h-8{height:2rem}.border{border-width:1px;border-style:solid}.border-b{border-bottom-width:1px;border-bottom-style:solid}.border-l-4{border-left-width:4px;border-left-style:solid}.bg-navy{background:var(--bg)}.bg-navy-dark{background:var(--bg-dark)}.bg-navy-card{background:var(--bg-card)}.bg-navy-deep{background:var(--bg-deep)}.text-txt{color:var(--txt)}.text-txt-muted{color:var(--txt-muted)}.text-teal{color:var(--teal-light)}.text-pathgreen{color:var(--green)}.text-pathamber{color:var(--amber)}.text-pathred{color:var(--red)}.bg-pathgreen\/10{background:rgba(34,197,94,.10)}.bg-pathgreen\/15{background:rgba(34,197,94,.15)}.bg-pathgreen\/20{background:rgba(34,197,94,.20)}.bg-pathamber\/10{background:rgba(245,158,11,.10)}.bg-pathamber\/15{background:rgba(245,158,11,.15)}.bg-pathamber\/20{background:rgba(245,158,11,.20)}.bg-pathred\/5{background:rgba(239,68,68,.05)}.bg-pathred\/10{background:rgba(239,68,68,.10)}.bg-pathred\/15{background:rgba(239,68,68,.15)}.bg-pathred\/20{background:rgba(239,68,68,.20)}.bg-teal\/10{background:rgba(42,157,143,.10)}.bg-teal\/15{background:rgba(42,157,143,.15)}.border-pathgreen\/30{border-color:rgba(34,197,94,.30)}.border-pathamber\/30{border-color:rgba(245,158,11,.30)}.border-pathred\/20{border-color:rgba(239,68,68,.20)}.border-pathred\/30{border-color:rgba(239,68,68,.30)}.border-teal\/30{border-color:rgba(42,157,143,.30)}.border-white\/5{border-color:rgba(255,255,255,.05)}.pl-4{padding-left:1rem}.pl-5{padding-left:1.25rem}.list-decimal{list-style-type:decimal}.max-w-\[860px\]{max-width:860px}.max-w-\[920px\]{max-width:920px}.text-txt-muted\/50{color:rgba(148,184,214,.5)}.text-txt-muted\/60{color:rgba(148,184,214,.6)}.text-txt-muted\/70{color:rgba(148,184,214,.7)}
+@media(min-width:768px){.md\:px-6{padding-left:1.5rem;padding-right:1.5rem}.md\:py-12{padding-top:3rem;padding-bottom:3rem}.md\:p-8{padding:2rem}.md\:p-6{padding:1.5rem}.md\:text-base{font-size:1rem}.md\:text-lg{font-size:1.125rem}.md\:text-xl{font-size:1.25rem}.md\:text-2xl{font-size:1.5rem}.md\:text-4xl{font-size:2.25rem}.md\:text-5xl{font-size:3rem}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:block{display:block}}
+@media(min-width:640px){.sm\:flex-row{flex-direction:row}}
+@media(min-width:1024px){.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Accessibility enhancements */
+.screen[aria-hidden="true"]{display:none!important}.screen:focus{outline:none}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.red-flag-card{width:100%;text-align:left;color:inherit;font:inherit}.red-flag-card:focus-visible,.accordion-toggle:focus-visible,.btn-primary:focus-visible,.btn-ghost:focus-visible{outline:3px solid #fff;outline-offset:3px}.progress-wrap{min-width:130px}.progress-status{font-size:.75rem;color:var(--txt-muted);margin-right:.5rem}
+</style>
+
+
+    <!-- HEADER -->
+    <header data-id="2" id="app-header-h1k4" class="bg-navy-dark border-b border-white/5 sticky top-0 z-50" style="min-height:56px;">
+        <div data-id="3" class="max-w-[920px] mx-auto px-4 md:px-6 flex items-center justify-between h-14">
+            <div data-id="4" class="flex items-center gap-2">
+                
+                <span data-id="6" class="font-semibold text-sm md:text-base text-txt">Joe's LBP Vignette</span>
+            </div>
+            <div data-id="7" id="header-doc-label-d9f2" class="hidden md:block text-txt-muted text-xs tracking-wide"></div>
+            <div data-id="8" class="flex items-center gap-3">
+                <div data-id="9" id="path-badge-p3k1" class="hidden"></div>
+                <div class="progress-wrap flex items-center"><span id="progress-status" class="progress-status">Step 1 of 10</span><div data-id="10" id="progress-dots-c7m2" class="flex gap-1.5 items-center" aria-hidden="true"></div></div>
+            </div>
+        </div>
+        <div data-id="11" class="w-full bg-navy-dark" style="height:3px;">
+            <div data-id="12" id="progress-bar-b4n1" class="progress-bar-top" style="width:0%;"></div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main data-id="13" class="flex-1 overflow-y-auto" id="vignette-main" aria-label="Interactive clinical vignette">
+        <div id="sr-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+        <div data-id="14" class="max-w-[860px] mx-auto px-4 md:px-6 py-8 md:py-12">
+
+            <!-- SCREEN 0: COVER -->
+            <section data-id="15" id="screen-0" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="16" class="relative flex flex-col items-center justify-center text-center min-h-[70vh] py-12">
+                    <div data-id="17" class="hero-bg-pattern"></div>
+                    <div data-id="18" class="relative z-10 flex flex-col items-center gap-6">
+                        <div data-id="19" class="w-20 h-20 rounded-full bg-teal/10 flex items-center justify-center mb-2">
+                            
+                        </div>
+                        <h1 data-id="21" id="cover-title-t9a3" class="text-3xl md:text-5xl font-bold leading-tight">Joe's Acute Low Back Pain</h1>
+                        <p data-id="22" class="text-lg md:text-xl text-teal font-medium">A Clinical Decision-Making Branching Vignette</p>
+                        <p data-id="23" class="max-w-xl text-txt-muted leading-relaxed text-sm md:text-base">You are a provider in an urgent care clinic. A patient has arrived with acute low back pain. Read each scenario carefully, make your clinical decisions, and see how your choices affect the outcome. This case is designed to develop your clinical reasoning skills for acute musculoskeletal presentations.</p>
+                        <div data-id="24" class="flex flex-wrap justify-center gap-3 mt-2">
+                            <span data-id="25" class="badge-chip bg-teal/10 text-teal"> Clinical Reasoning</span>
+                            <span data-id="27" class="badge-chip bg-teal/10 text-teal"> Evidence-Based Practice</span>
+                            <span data-id="29" class="badge-chip bg-teal/10 text-teal"> 3 Decision Paths</span>
+                            <span data-id="31" class="badge-chip bg-teal/10 text-teal"> Full Debrief</span>
+                        </div>
+                        <button data-id="33" id="btn-begin-x2k9" class="btn-primary mt-4 text-lg">Begin Case </button>
+                        <p data-id="35" class="text-xs text-txt-muted/50 mt-3">Blackboard Ultra Interactive Vignette · For Educational Use Only</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SCREEN 1: DOC 1 INTRO -->
+            <section data-id="36" id="screen-1" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="37" class="mb-6"><span data-id="38" class="doc-badge">DOCUMENT 1 — Initial Presentation</span></div>
+                <div data-id="39" class="bg-navy-card rounded-2xl p-6 md:p-8 mb-6 border border-white/5">
+                    <div data-id="40" class="flex flex-col sm:flex-row items-start gap-5">
+                        <div data-id="41" class="w-16 h-16 rounded-full bg-navy-deep flex items-center justify-center flex-shrink-0">
+                            
+                        </div>
+                        <div data-id="43" class="flex-1">
+                            <h2 data-id="44" class="text-xl md:text-2xl font-bold mb-1">Joe, 42-year-old male</h2>
+                            <p data-id="45" class="text-txt-muted text-sm mb-4">Construction Worker</p>
+                            <div data-id="46" class="bg-navy-deep rounded-xl p-4 mb-4 border-l-4 border-teal">
+                                <p data-id="47" class="text-xs text-teal font-semibold uppercase tracking-wider mb-1">Chief Complaint</p>
+                                <p data-id="48" class="text-base md:text-lg font-semibold">"Sudden-onset low back pain while lifting heavy materials this morning"</p>
+                            </div>
+                            <div data-id="49" class="mb-2">
+                                <p data-id="50" class="text-xs text-txt-muted font-semibold uppercase tracking-wider mb-2">Pain Level</p>
+                                <div data-id="51" class="flex items-center gap-3">
+                                    <span data-id="52" class="text-xs text-txt-muted">0</span>
+                                    <div data-id="53" class="flex-1 pain-bar" role="img" aria-label="Pain level 7 out of 10">
+                                        <div data-id="54" class="pain-thumb" style="left:70%;"></div>
+                                    </div>
+                                    <span data-id="55" class="text-xs text-txt-muted">10</span>
+                                </div>
+                                <p data-id="56" class="text-center text-sm font-bold text-pathred mt-1">Pain: 7/10</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-id="57" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div data-id="58" class="bg-navy-card rounded-2xl p-5 border border-white/5">
+                        <h3 data-id="59" class="text-sm font-bold uppercase tracking-wider text-teal mb-3 flex items-center gap-2"> History</h3>
+                        <ul data-id="61" class="space-y-2.5 text-sm">
+                            <li data-id="62" class="flex items-start gap-2"><span data-id="63">📍</span><span data-id="64"><strong data-id="65">Pain:</strong> Sharp, localized to lower lumbar region</span></li>
+                            <li data-id="66" class="flex items-start gap-2"><span data-id="67">🚫</span><span data-id="68">No radiation down either leg</span></li>
+                            <li data-id="69" class="flex items-start gap-2"><span data-id="70">🚫</span><span data-id="71">Denies: bowel/bladder changes, saddle anesthesia</span></li>
+                            <li data-id="72" class="flex items-start gap-2"><span data-id="73">🚫</span><span data-id="74">Denies: fever, unexplained weight loss</span></li>
+                            <li data-id="75" class="flex items-start gap-2"><span data-id="76">🚫</span><span data-id="77">No history of cancer</span></li>
+                            <li data-id="78" class="flex items-start gap-2"><span data-id="79">💊</span><span data-id="80"><strong data-id="81">PMH:</strong> Hypertension (controlled) · Lisinopril 10mg daily · NKDA</span></li>
+                        </ul>
+                    </div>
+                    <div data-id="82" class="bg-navy-card rounded-2xl p-5 border border-white/5">
+                        <h3 data-id="83" class="text-sm font-bold uppercase tracking-wider text-teal mb-3 flex items-center gap-2"> Joe's Concerns</h3>
+                        <ul data-id="85" class="space-y-2.5 text-sm">
+                            <li data-id="86" class="flex items-start gap-2"><span data-id="87">😟</span><span data-id="88">Anxious — worried he has a "slipped disc"</span></li>
+                            <li data-id="89" class="flex items-start gap-2"><span data-id="90">📷</span><span data-id="91">Requesting imaging to "know what's going on"</span></li>
+                            <li data-id="92" class="flex items-start gap-2"><span data-id="93">💊</span><span data-id="94">Has not taken any medications for pain yet</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div data-id="95" class="bg-pathamber/10 border border-pathamber/30 rounded-xl p-4 mb-8 flex items-start gap-3">
+                    <span data-id="96" class="text-lg">📌</span>
+                    <p data-id="97" class="text-sm text-pathamber"><strong data-id="98">Take note</strong> of Joe's anxiety and expectations — they will factor into your clinical encounter.</p>
+                </div>
+                <div data-id="99" class="flex flex-wrap gap-3">
+                    <button data-id="100" class="btn-ghost back-btn" data-to="0"> Back</button>
+                    <button data-id="102" class="btn-primary nav-btn" data-to="2">View Vital Signs & Exam </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 2: VITALS & EXAM -->
+            <section data-id="104" id="screen-2" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="105" class="mb-6"><span data-id="106" class="doc-badge">DOCUMENT 1 — Vital Signs & Physical Exam</span></div>
+                <div data-id="107" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+                    <div data-id="108" class="stat-card"><p data-id="109" class="text-xs text-txt-muted mb-1">Blood Pressure</p><p data-id="110" class="text-xl md:text-2xl font-bold">128/82 <span data-id="111" class="text-xs font-normal text-txt-muted">mmHg</span></p></div>
+                    <div data-id="112" class="stat-card"><p data-id="113" class="text-xs text-txt-muted mb-1">Heart Rate</p><p data-id="114" class="text-xl md:text-2xl font-bold">80 <span data-id="115" class="text-xs font-normal text-txt-muted">bpm</span></p></div>
+                    <div data-id="116" class="stat-card"><p data-id="117" class="text-xs text-txt-muted mb-1">Temperature</p><p data-id="118" class="text-xl md:text-2xl font-bold">98.6° <span data-id="119" class="text-xs font-normal text-txt-muted">F</span></p></div>
+                    <div data-id="120" class="stat-card"><p data-id="121" class="text-xs text-txt-muted mb-1">SpO₂</p><p data-id="122" class="text-xl md:text-2xl font-bold">98<span data-id="123" class="text-xs font-normal text-txt-muted">%</span></p></div>
+                    <div data-id="124" class="stat-card"><p data-id="125" class="text-xs text-txt-muted mb-1">Respirations</p><p data-id="126" class="text-xl md:text-2xl font-bold">16 <span data-id="127" class="text-xs font-normal text-txt-muted">/min</span></p></div>
+                    <div data-id="128" class="stat-card"><p data-id="129" class="text-xs text-txt-muted mb-1">Pain Score (NRS)</p><p data-id="130" class="text-xl md:text-2xl font-bold text-pathred">7<span data-id="131" class="text-xs font-normal text-txt-muted">/10</span></p></div>
+                </div>
+                <h3 data-id="132" class="text-lg font-bold mb-4">Physical Examination</h3>
+                <div data-id="133" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div data-id="134" class="bg-navy-card rounded-xl p-5 border-l-4 border-pathamber">
+                        <h4 data-id="135" class="text-sm font-bold text-pathamber mb-3 flex items-center gap-2"> Positive Findings</h4>
+                        <ul data-id="137" class="text-sm space-y-2"><li data-id="138" class="flex items-start gap-2"><span data-id="139" class="text-pathamber">•</span> Lumbar paraspinal muscle tenderness bilaterally</li></ul>
+                    </div>
+                    <div data-id="140" class="bg-navy-card rounded-xl p-5 border-l-4 border-pathgreen">
+                        <h4 data-id="141" class="text-sm font-bold text-pathgreen mb-3 flex items-center gap-2"> Negative Findings</h4>
+                        <ul data-id="143" class="text-sm space-y-2">
+                            <li data-id="144" class="flex items-start gap-2"><span data-id="145" class="text-pathgreen">•</span> No midline spinal tenderness</li>
+                            <li data-id="146" class="flex items-start gap-2"><span data-id="147" class="text-pathgreen">•</span> Negative SLR bilaterally</li>
+                            <li data-id="148" class="flex items-start gap-2"><span data-id="149" class="text-pathgreen">•</span> Full lower extremity motor strength (5/5)</li>
+                            <li data-id="150" class="flex items-start gap-2"><span data-id="151" class="text-pathgreen">•</span> Intact bilateral sensation</li>
+                            <li data-id="152" class="flex items-start gap-2"><span data-id="153" class="text-pathgreen">•</span> No visible deformity or skin changes</li>
+                            <li data-id="154" class="flex items-start gap-2"><span data-id="155" class="text-pathgreen">•</span> No bowel/bladder dysfunction</li>
+                        </ul>
+                    </div>
+                </div>
+                <div data-id="156" class="bg-pathgreen/10 border border-pathgreen/30 rounded-xl p-5 mb-8 text-center">
+                    <p data-id="157" class="text-pathgreen font-bold text-base md:text-lg flex items-center justify-center gap-2"> No Red Flag Symptoms Identified</p>
+                    <p data-id="159" class="text-sm text-txt-muted mt-1">Imaging is not indicated at this time per clinical guidelines.</p>
+                </div>
+                <div data-id="160" class="flex flex-wrap gap-3">
+                    <button data-id="161" class="btn-ghost back-btn" data-to="1"> Back</button>
+                    <button data-id="163" class="btn-primary nav-btn" data-to="3">Proceed to Decision Point </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 3: DECISION POINT -->
+            <section data-id="165" id="screen-3" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="166" class="text-center mb-8">
+                    <div data-id="167" class="inline-flex items-center gap-2 text-pathamber text-3xl md:text-4xl font-bold mb-2"> DECISION POINT</div>
+                    <p data-id="169" class="text-lg text-txt-muted">Based on Joe's presentation, what is your clinical decision?</p>
+                    <p data-id="170" class="text-sm text-txt-muted/70 mt-1">Select the path you believe is most appropriate. Your choice will determine Joe's outcome.</p>
+                </div>
+                <div data-id="171" class="space-y-4">
+                    <!-- OPTION A -->
+                    <div data-id="172" id="card-a-r4m2" class="bg-navy-card rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 relative" style="border-top: 6px solid var(--green);">
+                        <div data-id="173" class="p-5 md:p-6">
+                            <div data-id="174" class="flex items-start gap-4">
+                                <div data-id="175" class="w-12 h-12 rounded-xl bg-pathgreen/15 flex items-center justify-center flex-shrink-0"></div>
+                                <div data-id="177" class="flex-1">
+                                    <h3 data-id="178" class="font-bold text-lg mb-1">OPTION A — Conservative Management</h3>
+                                    <p data-id="179" class="text-sm text-txt-muted">Initiate activity modification, prescribe NSAIDs, and provide patient education. Do not order imaging at this time based on the absence of red flags.</p>
+                                </div>
+                            </div>
+                            <button data-id="180" class="btn-primary btn-green w-full mt-4 justify-center path-btn" data-path="A">Choose Path A </button>
+                        </div>
+                    </div>
+                    <!-- OPTION B -->
+                    <div data-id="182" id="card-b-k8n3" class="bg-navy-card rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 relative" style="border-top: 6px solid var(--amber);">
+                        <div data-id="183" class="p-5 md:p-6">
+                            <div data-id="184" class="flex items-start gap-4">
+                                <div data-id="185" class="w-12 h-12 rounded-xl bg-pathamber/15 flex items-center justify-center flex-shrink-0"></div>
+                                <div data-id="187" class="flex-1">
+                                    <h3 data-id="188" class="font-bold text-lg mb-1">OPTION B — Imaging First</h3>
+                                    <p data-id="189" class="text-sm text-txt-muted">Order a lumbar spine X-ray (and/or MRI) before deciding on a management approach, to rule out structural pathology.</p>
+                                </div>
+                            </div>
+                            <button data-id="190" class="btn-primary btn-amber w-full mt-4 justify-center path-btn" data-path="B">Choose Path B </button>
+                        </div>
+                    </div>
+                    <!-- OPTION C -->
+                    <div data-id="192" id="card-c-j5p7" class="bg-navy-card rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 relative" style="border-top: 6px solid var(--red);">
+                        <div data-id="193" class="p-5 md:p-6">
+                            <div data-id="194" class="flex items-start gap-4">
+                                <div data-id="195" class="w-12 h-12 rounded-xl bg-pathred/15 flex items-center justify-center flex-shrink-0"></div>
+                                <div data-id="197" class="flex-1">
+                                    <h3 data-id="198" class="font-bold text-lg mb-1">OPTION C — Rest and Return</h3>
+                                    <p data-id="199" class="text-sm text-txt-muted">Advise Joe to go home and rest completely for one week. Schedule a follow-up appointment. Do not prescribe medication or provide specific education at this time.</p>
+                                </div>
+                            </div>
+                            <button data-id="200" class="btn-primary btn-red w-full mt-4 justify-center path-btn" data-path="C">Choose Path C </button>
+                        </div>
+                    </div>
+                </div>
+                <div data-id="202" class="mt-6">
+                    <button data-id="203" class="btn-ghost back-btn" data-to="2"> Back</button>
+                </div>
+            </section>
+
+            <!-- SCREEN 4A: PATH 2A MANAGEMENT -->
+            <section data-id="205" id="screen-4a" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="206" class="flex flex-wrap items-center gap-3 mb-4">
+                    <span data-id="207" class="doc-badge">DOCUMENT 2A — Conservative Management</span>
+                    <span data-id="208" class="badge-chip bg-pathgreen/20 text-pathgreen"> Best Practice</span>
+                </div>
+                <div data-id="210" class="bg-pathgreen/10 border border-pathgreen/30 rounded-xl p-4 mb-6 flex items-center gap-3">
+                    
+                    <p data-id="212" class="text-sm text-pathgreen font-semibold">Evidence-Based Best Practice Path</p>
+                </div>
+                <p data-id="213" class="text-sm text-txt-muted mb-6">You chose conservative management — consistent with current clinical guidelines.</p>
+                <div data-id="214" class="space-y-3 mb-8">
+                    <div data-id="215" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-3"><span data-id="216" class="text-lg">💊</span><div data-id="217"><p data-id="218" class="font-semibold text-sm">1. NSAIDs</p><p data-id="219" class="text-sm text-txt-muted">Ibuprofen 600mg PO TID with food for 7 days (monitor renal function given HTN)</p></div></div>
+                    <div data-id="220" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-3"><span data-id="221" class="text-lg">🚶</span><div data-id="222"><p data-id="223" class="font-semibold text-sm">2. Activity Modification</p><p data-id="224" class="text-sm text-txt-muted">Encourage Joe to remain as active as tolerated; AVOID prolonged bed rest</p></div></div>
+                    <div data-id="225" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-3"><span data-id="226" class="text-lg">🔥</span><div data-id="227"><p data-id="228" class="font-semibold text-sm">3. Heat Therapy</p><p data-id="229" class="text-sm text-txt-muted">Apply to lumbar region 15–20 minutes several times daily</p></div></div>
+                    <div data-id="230" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-3"><span data-id="231" class="text-lg">📚</span><div data-id="232"><p data-id="233" class="font-semibold text-sm">4. Patient Education</p><p data-id="234" class="text-sm text-txt-muted">Explain the benign, self-limiting nature of acute low back pain; reassure that imaging is not indicated without red flags (per ACP guidelines)</p></div></div>
+                    <div data-id="235" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-3"><span data-id="236" class="text-lg">📅</span><div data-id="237"><p data-id="238" class="font-semibold text-sm">5. Follow-up</p><p data-id="239" class="text-sm text-txt-muted">4–6 weeks; return sooner if red flags develop or symptoms worsen</p></div></div>
+                    <div data-id="240" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-3"><span data-id="241" class="text-lg">🏥</span><div data-id="242"><p data-id="243" class="font-semibold text-sm">6. Referral</p><p data-id="244" class="text-sm text-txt-muted">If no improvement at 4–6 weeks, consider Physical Therapy</p></div></div>
+                </div>
+                <div data-id="245" class="speech-bubble mb-6">
+                    <p data-id="246" class="text-sm mb-3"><strong data-id="247" class="text-pathamber">Joe says:</strong> "But why won't you order a scan? I want to know what's wrong!"</p>
+                    <p data-id="248" class="text-sm mb-3"><strong data-id="249" class="text-teal">Your response:</strong> "Joe, acute low back pain is extremely common and almost always resolves on its own within 4–6 weeks. Imaging wouldn't change our treatment plan right now, and it can sometimes show age-related changes that cause unnecessary worry. Let's start with the approach most likely to get you better quickly."</p>
+                    <p data-id="250" class="text-sm"><strong data-id="251">Joe's reaction:</strong> 😌 After thorough education, Joe expresses understanding and agrees to the plan.</p>
+                </div>
+                <div data-id="252" class="flex items-center gap-2 mb-8 text-xs text-txt-muted bg-navy-deep rounded-lg px-4 py-2"><span data-id="254">ACP Clinical Practice Guideline, 2017 · <em data-id="255">Ann Intern Med</em> 166(7): 514–530</span></div>
+                <div data-id="256" class="flex flex-wrap gap-3">
+                    <button data-id="257" class="btn-ghost back-btn" data-to="3"> Back</button>
+                    <button data-id="259" class="btn-primary nav-btn" data-to="4b">See Joe's Outcome at 4 Weeks </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 4B: PATH 2A OUTCOME -->
+            <section data-id="261" id="screen-4b" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="262" class="mb-6"><span data-id="263" class="doc-badge">PATH 2A — Outcome</span></div>
+                <div data-id="264" class="space-y-4 mb-8">
+                    <div data-id="265" class="flex items-start gap-4"><div data-id="266" class="w-10 h-10 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">W1</div><div data-id="267" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="268" class="text-sm font-semibold mb-1">📅 Week 1</p><p data-id="269" class="text-sm text-txt-muted">Joe manages his pain with ibuprofen and heat. He is walking short distances despite some discomfort.</p></div></div>
+                    <div data-id="270" class="flex items-start gap-4"><div data-id="271" class="w-10 h-10 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">W2</div><div data-id="272" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="273" class="text-sm font-semibold mb-1">📅 Week 2</p><p data-id="274" class="text-sm text-txt-muted">Pain improving to 4/10. Joe resumes light household activities. No red flags have emerged.</p></div></div>
+                    <div data-id="275" class="flex items-start gap-4"><div data-id="276" class="w-10 h-10 rounded-full bg-pathgreen/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-pathgreen">W4</div><div data-id="277" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="278" class="text-sm font-semibold mb-1">📅 Week 4</p><p data-id="279" class="text-sm text-txt-muted">Joe returns to clinic. Pain: 2/10. He has returned to light-duty work and is performing home exercises.</p></div></div>
+                </div>
+                <div data-id="280" class="bg-pathgreen/10 border border-pathgreen/30 rounded-2xl p-6 mb-6 text-center">
+                    <p data-id="281" class="text-2xl mb-2">🎉</p>
+                    <p data-id="282" class="text-pathgreen font-bold text-lg">Significant improvement at 4 weeks</p>
+                    <p data-id="283" class="text-sm text-txt-muted mt-1">Pain 2/10 · No red flags emerged · Joe returned to work</p>
+                </div>
+                <div data-id="284" class="bg-navy-card rounded-2xl p-6 border border-white/5 mb-8">
+                    <div data-id="285" class="flex items-center gap-2 mb-3"><p data-id="287" class="font-bold text-teal">Excellent Clinical Decision-Making!</p></div>
+                    <p data-id="288" class="text-sm text-txt-muted leading-relaxed">This path reflects current evidence-based guidelines (ACP, 2017) which recommend conservative, non-pharmacologic treatment as first-line care for acute non-specific low back pain. Imaging is not recommended for acute LBP in the absence of red flags, as it does not improve outcomes and may lead to unnecessary procedures and patient anxiety. Your decision to educate Joe was critical for shared decision-making and patient satisfaction.</p>
+                </div>
+                <div data-id="289" class="flex flex-wrap gap-3">
+                    <button data-id="290" class="btn-ghost back-btn" data-to="4a"> Back</button>
+                    <button data-id="292" class="btn-primary nav-btn" data-to="7">Proceed to Final Debrief </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 5A: PATH 2B IMAGING -->
+            <section data-id="294" id="screen-5a" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="295" class="flex flex-wrap items-center gap-3 mb-4">
+                    <span data-id="296" class="doc-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">DOCUMENT 2B — Imaging First</span>
+                    <span data-id="297" class="badge-chip bg-pathamber/20 text-pathamber"> Suboptimal</span>
+                </div>
+                <div data-id="299" class="bg-pathamber/10 border border-pathamber/30 rounded-xl p-4 mb-6 flex items-center gap-3">
+                    
+                    <p data-id="301" class="text-sm text-pathamber font-semibold">Suboptimal Path — Common Clinical Choice</p>
+                </div>
+                <p data-id="302" class="text-sm text-txt-muted mb-6">You ordered a lumbar spine X-ray. Results are now available.</p>
+                <div data-id="303" class="mono-report mb-6">
+                    <p data-id="304" class="text-teal font-bold text-xs uppercase tracking-widest mb-3">Lumbar Spine X-Ray Report</p>
+                    <p data-id="305" class="text-txt-muted text-xs mb-1"><strong data-id="306" class="text-txt">Indication:</strong> Acute low back pain</p>
+                    <p data-id="307" class="text-txt-muted text-xs mb-3"><strong data-id="308" class="text-txt">Findings:</strong></p>
+                    <ul data-id="309" class="text-xs text-txt-muted space-y-1 mb-3 pl-4">
+                        <li data-id="310">• Mild disc space narrowing at L4-L5</li>
+                        <li data-id="311">• No acute fracture identified</li>
+                        <li data-id="312">• No significant spondylolisthesis</li>
+                        <li data-id="313">• No destructive bony lesion</li>
+                    </ul>
+                    <p data-id="314" class="text-xs"><strong data-id="315" class="text-pathamber">Impression:</strong> <span data-id="316" class="text-txt-muted">Mild degenerative changes at L4-L5, age-appropriate for a 42-year-old male. No acute osseous pathology.</span></p>
+                </div>
+                <div data-id="317" class="speech-bubble mb-6">
+                    <p data-id="318" class="text-sm"><span data-id="319" class="text-2xl mr-2">😰</span> <strong data-id="320" class="text-pathamber">Joe:</strong> "Degenerative changes? Is that why my back hurts? Is it going to keep getting worse?!"</p>
+                    <p data-id="321" class="text-sm text-txt-muted mt-2">Additional counseling time required. Joe is now <strong data-id="322" class="text-pathred">MORE</strong> anxious than when he arrived.</p>
+                </div>
+                <div data-id="323" class="bg-pathamber/10 border border-pathamber/30 rounded-xl p-4 mb-8 flex items-start gap-3">
+                    <span data-id="324" class="text-lg">⚠️</span>
+                    <p data-id="325" class="text-sm text-pathamber">Were there any red flags present that indicated imaging was necessary at this visit?</p>
+                </div>
+                <div data-id="326" class="flex flex-wrap gap-3">
+                    <button data-id="327" class="btn-ghost back-btn" data-to="3"> Back</button>
+                    <button data-id="329" class="btn-primary nav-btn" data-to="5b">See the Impact of This Decision </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 5B: PATH 2B CONSEQUENCES -->
+            <section data-id="331" id="screen-5b" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="332" class="mb-6"><span data-id="333" class="doc-badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;">PATH 2B — Consequences</span></div>
+                <div data-id="334" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div data-id="335" class="bg-navy-card rounded-xl p-5 border-l-4 border-pathamber">
+                        <h4 data-id="336" class="text-sm font-bold text-pathamber mb-3">What Happened</h4>
+                        <ul data-id="337" class="text-sm text-txt-muted space-y-2">
+                            <li data-id="338" class="flex items-start gap-2"> Joe felt briefly reassured, then became MORE anxious</li>
+                            <li data-id="340" class="flex items-start gap-2"> "Degenerative changes" became the focus of the visit</li>
+                            <li data-id="342" class="flex items-start gap-2"> Additional 15+ minutes of counseling required</li>
+                            <li data-id="344" class="flex items-start gap-2"> Joe is now requesting an MRI</li>
+                            <li data-id="346" class="flex items-start gap-2"> Incidental findings ≠ cause of acute pain</li>
+                        </ul>
+                    </div>
+                    <div data-id="348" class="bg-navy-card rounded-xl p-5 border-l-4 border-teal">
+                        <h4 data-id="349" class="text-sm font-bold text-teal mb-3">What the Evidence Shows</h4>
+                        <ul data-id="350" class="text-sm text-txt-muted space-y-2">
+                            <li data-id="351" class="flex items-start gap-2"> ACP guidelines: imaging NOT recommended without red flags</li>
+                            <li data-id="353" class="flex items-start gap-2"> Mild degenerative changes present in 30–50% of asymptomatic adults</li>
+                            <li data-id="355" class="flex items-start gap-2"> Imaging does not change management for acute non-specific LBP</li>
+                            <li data-id="357" class="flex items-start gap-2"> Routine imaging increases costs and radiation exposure</li>
+                            <li data-id="359" class="flex items-start gap-2"> Incidental findings independently predict worse outcomes (fear-avoidance)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div data-id="361" class="bg-navy-card rounded-2xl p-6 border border-white/5 mb-6">
+                    <div data-id="362" class="flex items-center gap-2 mb-3"><p data-id="364" class="font-bold text-teal">Instructor Feedback</p></div>
+                    <p data-id="365" class="text-sm text-txt-muted leading-relaxed">While imaging can feel reassuring, current clinical guidelines do not recommend routine imaging for acute non-specific low back pain without red flags. Joe's presentation had none. The degenerative changes found are extremely common and are NOT necessarily the source of acute pain. Conservative management should still be initiated.</p>
+                </div>
+                <div data-id="366" class="space-y-2 mb-8">
+                    <div data-id="367" class="accordion-item bg-navy-deep rounded-xl overflow-hidden">
+                        <button data-id="368" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-medium"><span data-id="369">1. Were there any red flags present that indicated imaging at this visit?</span></button>
+                        <div data-id="371" class="accordion-content px-4 text-sm text-txt-muted"><p data-id="372" class="pb-4">No. Joe had no saddle anesthesia, no bowel/bladder changes, no fever, no cancer history, no weight loss, and no neurologic deficits. None of these red flags were present.</p></div>
+                    </div>
+                    <div data-id="373" class="accordion-item bg-navy-deep rounded-xl overflow-hidden">
+                        <button data-id="374" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-medium"><span data-id="375">2. How do incidental findings affect patient psychology and recovery?</span></button>
+                        <div data-id="377" class="accordion-content px-4 text-sm text-txt-muted"><p data-id="378" class="pb-4">Incidental findings on imaging can lead to catastrophizing, increased fear-avoidance behavior, and longer recovery times. Patients may believe their spine is "damaged" and avoid normal activity, which worsens outcomes.</p></div>
+                    </div>
+                    <div data-id="379" class="accordion-item bg-navy-deep rounded-xl overflow-hidden">
+                        <button data-id="380" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-medium"><span data-id="381">3. How would you counsel Joe about his imaging results?</span></button>
+                        <div data-id="383" class="accordion-content px-4 text-sm text-txt-muted"><p data-id="384" class="pb-4">Explain that the findings are very common and often present in people with NO pain. Emphasize that these changes are normal for his age and do not mean his back is "broken." Redirect focus to functional recovery.</p></div>
+                    </div>
+                </div>
+                <div data-id="385" class="flex flex-wrap gap-3">
+                    <button data-id="386" class="btn-ghost back-btn" data-to="5a"> Back</button>
+                    <button data-id="388" class="btn-primary nav-btn" data-to="7">Proceed to Final Debrief </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 6A: PATH 2C REST -->
+            <section data-id="390" id="screen-6a" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="391" class="flex flex-wrap items-center gap-3 mb-4">
+                    <span data-id="392" class="doc-badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">DOCUMENT 2C — Rest and Return</span>
+                    <span data-id="393" class="badge-chip bg-pathred/20 text-pathred"> Least Optimal</span>
+                </div>
+                <div data-id="395" class="bg-pathred/10 border border-pathred/30 rounded-xl p-4 mb-6 flex items-center gap-3">
+                    
+                    <p data-id="397" class="text-sm text-pathred font-semibold">Least Optimal Path — Outdated Management</p>
+                </div>
+                <p data-id="398" class="text-sm text-txt-muted mb-6">You advised Joe to rest completely at home for one week with no analgesics, no education, and no follow-up guidance.</p>
+                <div data-id="399" class="bg-navy-card rounded-2xl p-5 border border-white/5 mb-6">
+                    <h4 data-id="400" class="text-sm font-bold text-pathred mb-4">What Was Missed at This Visit</h4>
+                    <ul data-id="401" class="space-y-3 text-sm">
+                        <li data-id="402" class="flex items-start gap-3"> No analgesics prescribed — Joe has no pain relief</li>
+                        <li data-id="404" class="flex items-start gap-3"> No patient education provided about acute LBP</li>
+                        <li data-id="406" class="flex items-start gap-3"> Joe's anxiety about a "slipped disc" was not addressed</li>
+                        <li data-id="408" class="flex items-start gap-3"> Told to stay in bed completely — contradicts current evidence</li>
+                        <li data-id="410" class="flex items-start gap-3"> No return precautions given — Joe doesn't know when to seek care</li>
+                    </ul>
+                </div>
+                <div data-id="412" class="bg-pathred/5 border border-pathred/20 rounded-xl p-5 mb-8">
+                    <p data-id="413" class="text-sm text-txt-muted flex items-start gap-2"><span data-id="414" class="text-lg">📖</span><span data-id="415"><strong data-id="416" class="text-pathred">Evidence:</strong> Prolonged bed rest leads to muscle deconditioning, fear-avoidance behavior, increased pain sensitivity, and delayed functional recovery. Bed rest is <strong data-id="417">CONTRAINDICATED</strong> in acute low back pain management.</span></p>
+                </div>
+                <div data-id="418" class="flex flex-wrap gap-3">
+                    <button data-id="419" class="btn-ghost back-btn" data-to="3"> Back</button>
+                    <button data-id="421" class="btn-primary nav-btn" data-to="6b">See What Happens During Joe's Week </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 6B: PATH 2C OUTCOME -->
+            <section data-id="423" id="screen-6b" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="424" class="mb-6"><span data-id="425" class="doc-badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">PATH 2C — Outcome</span></div>
+                <div data-id="426" class="space-y-4 mb-6">
+                    <div data-id="427" class="flex items-start gap-4"><div data-id="428" class="w-10 h-10 rounded-full bg-pathred/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-pathred">D1</div><div data-id="429" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="430" class="text-sm"><strong data-id="431">Day 1:</strong> <span data-id="432" class="text-txt-muted">Joe rests in bed. Pain unchanged at 7/10. Searches symptoms online. Convinced he has a herniated disc.</span></p></div></div>
+                    <div data-id="433" class="flex items-start gap-4"><div data-id="434" class="w-10 h-10 rounded-full bg-pathred/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-pathred">D3</div><div data-id="435" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="436" class="text-sm"><strong data-id="437">Day 3:</strong> <span data-id="438" class="text-txt-muted">Pain WORSENS to 9/10. Cannot find comfortable position. Deconditioning begins. Unable to sleep.</span></p></div></div>
+                    <div data-id="439" class="flex items-start gap-4"><div data-id="440" class="w-10 h-10 rounded-full bg-pathred/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-pathred">D5</div><div data-id="441" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="442" class="text-sm"><strong data-id="443">Day 5:</strong> <span data-id="444" class="text-txt-muted">Joe's wife calls the clinic, extremely worried. Joe is now fearful of movement.</span></p></div></div>
+                    <div data-id="445" class="flex items-start gap-4"><div data-id="446" class="w-10 h-10 rounded-full bg-pathred/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-pathred">D7</div><div data-id="447" class="bg-navy-card rounded-xl p-4 flex-1 border border-white/5"><p data-id="448" class="text-sm"><strong data-id="449">Day 7 — Follow-up:</strong> <span data-id="450" class="text-txt-muted">Joe returns frustrated and in MORE pain than at his initial visit (9/10). He demands an MRI and a spine specialist referral.</span></p></div></div>
+                    <div data-id="451" class="flex items-start gap-4"><div data-id="452" class="w-10 h-10 rounded-full bg-pathred/20 flex items-center justify-center flex-shrink-0"></div><div data-id="454" class="bg-navy-card rounded-xl p-4 flex-1 border border-pathred/20"><p data-id="455" class="text-sm text-pathred font-semibold">Result: Trust compromised. Additional workup now required. Recovery delayed.</p></div></div>
+                </div>
+                <div data-id="456" class="bg-pathred/10 border border-pathred/30 rounded-2xl p-6 mb-6 text-center">
+                    <p data-id="457" class="text-2xl mb-2">❌</p>
+                    <p data-id="458" class="text-pathred font-bold text-lg">Worsening outcome</p>
+                    <p data-id="459" class="text-sm text-txt-muted mt-1">Pain increased from 7/10 to 9/10 · Patient dissatisfied · Recovery delayed</p>
+                </div>
+                <div data-id="460" class="space-y-2 mb-6">
+                    <div data-id="461" class="accordion-item bg-navy-deep rounded-xl overflow-hidden">
+                        <button data-id="462" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-medium"><span data-id="463">1. What is the evidence regarding bed rest in acute LBP management?</span></button>
+                        <div data-id="465" class="accordion-content px-4 text-sm text-txt-muted"><p data-id="466" class="pb-4">Multiple systematic reviews demonstrate that bed rest beyond 1-2 days is associated with worse outcomes including prolonged pain, deconditioning, and delayed return to work. Current guidelines universally recommend staying active.</p></div>
+                    </div>
+                    <div data-id="467" class="accordion-item bg-navy-deep rounded-xl overflow-hidden">
+                        <button data-id="468" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-medium"><span data-id="469">2. What was missed during the initial visit?</span></button>
+                        <div data-id="471" class="accordion-content px-4 text-sm text-txt-muted"><p data-id="472" class="pb-4">Analgesia, patient education, reassurance, activity counseling, return precautions, and addressing Joe's anxiety were all missed. Each of these is a core component of evidence-based acute LBP management.</p></div>
+                    </div>
+                    <div data-id="473" class="accordion-item bg-navy-deep rounded-xl overflow-hidden">
+                        <button data-id="474" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-medium"><span data-id="475">3. What would you do differently at the follow-up visit?</span></button>
+                        <div data-id="477" class="accordion-content px-4 text-sm text-txt-muted"><p data-id="478" class="pb-4">Reassess for red flags, initiate NSAID therapy, provide thorough education, encourage gradual return to activity, address fear-avoidance beliefs, and establish clear follow-up with return precautions.</p></div>
+                    </div>
+                </div>
+                <div data-id="479" class="bg-navy-card rounded-2xl p-6 border border-white/5 mb-8">
+                    <div data-id="480" class="flex items-center gap-2 mb-3"><p data-id="482" class="font-bold text-teal">Instructor Feedback</p></div>
+                    <p data-id="483" class="text-sm text-txt-muted leading-relaxed">This approach reflects outdated management. Evidence consistently shows that prolonged bed rest is harmful — it leads to deconditioning, worsening pain, and fear-avoidance behavior. Current guidelines recommend staying active within pain tolerance, early analgesia, and patient education. At the follow-up, reassess for red flags, initiate conservative management, and provide clear, reassuring education.</p>
+                </div>
+                <div data-id="484" class="flex flex-wrap gap-3">
+                    <button data-id="485" class="btn-ghost back-btn" data-to="6a"> Back</button>
+                    <button data-id="487" class="btn-primary nav-btn" data-to="7">Proceed to Final Debrief </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 7: DEBRIEF COMPARISON -->
+            <section data-id="489" id="screen-7" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="490" class="mb-6"><span data-id="491" class="doc-badge text-base">DOCUMENT 5 — Final Debrief</span></div>
+                <h2 data-id="492" class="text-xl md:text-2xl font-bold mb-2">Pathway Comparison</h2>
+                <p data-id="493" class="text-sm text-txt-muted mb-6">All paths converge here. Let's compare all three clinical decisions.</p>
+                <div data-id="494" class="overflow-x-auto mb-6 rounded-xl border border-white/5">
+                    <table data-id="495" class="w-full text-sm" style="min-width:600px;">
+                        <thead data-id="496">
+                            <tr data-id="497" class="bg-navy-deep">
+                                <th scope="col" data-id="498" class="table-cell text-left text-txt-muted font-medium" style="width:25%;">Criterion</th>
+                                <th scope="col" data-id="499" id="col-a-h8k2" class="table-cell text-center font-bold text-pathgreen" style="width:25%;">Path 2A</th>
+                                <th scope="col" data-id="500" id="col-b-m3j7" class="table-cell text-center font-bold text-pathamber" style="width:25%;">Path 2B</th>
+                                <th scope="col" data-id="501" id="col-c-n1q5" class="table-cell text-center font-bold text-pathred" style="width:25%;">Path 2C</th>
+                            </tr>
+                        </thead>
+                        <tbody data-id="502" class="bg-navy-card">
+                            <tr data-id="503"><td data-id="504" class="table-cell text-txt-muted font-medium">Guideline Adherence</td><td data-id="505" id="cell-a1" class="table-cell text-center">High ✅</td><td data-id="506" id="cell-b1" class="table-cell text-center">Moderate ⚠️</td><td data-id="507" id="cell-c1" class="table-cell text-center">Low ❌</td></tr>
+                            <tr data-id="508"><td data-id="509" class="table-cell text-txt-muted font-medium">Patient Outcome</td><td data-id="510" id="cell-a2" class="table-cell text-center">2/10 pain at 4 wks ✅</td><td data-id="511" id="cell-b2" class="table-cell text-center">Improved but added anxiety ⚠️</td><td data-id="512" id="cell-c2" class="table-cell text-center">Worsened (9/10 pain) ❌</td></tr>
+                            <tr data-id="513"><td data-id="514" class="table-cell text-txt-muted font-medium">Resource Use</td><td data-id="515" id="cell-a3" class="table-cell text-center">Low ✅</td><td data-id="516" id="cell-b3" class="table-cell text-center">Moderate ⚠️</td><td data-id="517" id="cell-c3" class="table-cell text-center">Higher at follow-up ❌</td></tr>
+                            <tr data-id="518"><td data-id="519" class="table-cell text-txt-muted font-medium">Patient Satisfaction</td><td data-id="520" id="cell-a4" class="table-cell text-center">High ✅</td><td data-id="521" id="cell-b4" class="table-cell text-center">Mixed ⚠️</td><td data-id="522" id="cell-c4" class="table-cell text-center">Low ❌</td></tr>
+                            <tr data-id="523"><td data-id="524" class="table-cell text-txt-muted font-medium">Key Lesson</td><td data-id="525" id="cell-a5" class="table-cell text-center text-xs">Evidence-based care + education = best outcomes</td><td data-id="526" id="cell-b5" class="table-cell text-center text-xs">Avoid routine imaging; incidentals cause harm</td><td data-id="527" id="cell-c5" class="table-cell text-center text-xs">Bed rest is harmful; activity is key</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div data-id="528" class="bg-navy-deep rounded-xl p-5 mb-8 border-l-4 border-teal">
+                    <p data-id="529" class="text-sm md:text-base font-medium italic">"The best clinical decisions are grounded in evidence, patient communication, and guideline adherence."</p>
+                </div>
+                <div data-id="530" class="flex flex-wrap gap-3">
+                    <button data-id="531" class="btn-primary nav-btn" data-to="8">Next: Learning Objectives </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 8: LEARNING OBJECTIVES -->
+            <section data-id="533" id="screen-8" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="534" class="mb-6"><span data-id="535" class="doc-badge">Final Debrief — Learning Objectives</span></div>
+                <h2 data-id="536" class="text-xl md:text-2xl font-bold mb-6">Key Learning Objectives</h2>
+                <div data-id="537" class="space-y-3 mb-8">
+                    <div data-id="538" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-4"><span data-id="539" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">1</span><div data-id="540"><p data-id="541" class="text-sm"><span data-id="542" class="mr-1">🚨</span> <strong data-id="543">Identify red flag symptoms</strong> requiring urgent evaluation (saddle anesthesia, bowel/bladder dysfunction, fever, cancer hx, unexplained weight loss, significant trauma)</p></div></div>
+                    <div data-id="544" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-4"><span data-id="545" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">2</span><div data-id="546"><p data-id="547" class="text-sm"><span data-id="548" class="mr-1">📋</span> <strong data-id="549">Apply ACP/AHRQ evidence-based guidelines</strong> — including recommendation AGAINST routine imaging for acute non-specific LBP</p></div></div>
+                    <div data-id="550" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-4"><span data-id="551" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">3</span><div data-id="552"><p data-id="553" class="text-sm"><span data-id="554" class="mr-1">🗣️</span> <strong data-id="555">Demonstrate patient-centered communication</strong> and shared decision-making to address patient anxiety and imaging expectations</p></div></div>
+                    <div data-id="556" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-4"><span data-id="557" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">4</span><div data-id="558"><p data-id="559" class="text-sm"><span data-id="560" class="mr-1">🏃</span> <strong data-id="561">Recognize the harms of prolonged bed rest</strong> and articulate the benefits of early activity and mobilization</p></div></div>
+                    <div data-id="562" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-4"><span data-id="563" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">5</span><div data-id="564"><p data-id="565" class="text-sm"><span data-id="566" class="mr-1">💊</span> <strong data-id="567">Select appropriate pharmacologic therapy</strong> (NSAIDs first-line) and non-pharmacologic interventions (heat, activity modification)</p></div></div>
+                    <div data-id="568" class="bg-navy-deep rounded-xl p-4 border-l-4 border-teal flex items-start gap-4"><span data-id="569" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">6</span><div data-id="570"><p data-id="571" class="text-sm"><span data-id="572" class="mr-1">📅</span> <strong data-id="573">Identify appropriate follow-up timelines</strong> and criteria for escalation of care or PT referral</p></div></div>
+                </div>
+                <div data-id="574" class="flex flex-wrap gap-3">
+                    <button data-id="575" class="btn-ghost back-btn" data-to="7"> Back</button>
+                    <button data-id="577" class="btn-primary nav-btn" data-to="9">Review Red Flags </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 9: RED FLAGS -->
+            <section data-id="579" id="screen-9" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="580" class="mb-6"><span data-id="581" class="doc-badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">Final Debrief — Red Flags</span></div>
+                <h2 data-id="582" class="text-xl md:text-2xl font-bold text-pathred mb-2 flex items-center gap-2"> Red Flags Requiring Urgent Evaluation</h2>
+                <p data-id="584" class="text-sm text-txt-muted mb-6">Joe had <strong data-id="585">NONE</strong> of these findings — confirming conservative management was appropriate. <span data-id="586" class="text-xs text-txt-muted/60">(Click a card to expand)</span></p>
+                <div data-id="587" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+                    <button type="button" data-id="588" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="0" aria-expanded="false"><div data-id="589" class="flex items-start gap-2"><span data-id="590" class="text-pathred font-bold text-lg">🔴</span><div data-id="591"><p data-id="592" class="text-sm font-semibold">Saddle Anesthesia</p><p data-id="593" class="text-xs text-txt-muted">Numbness in perineum/inner thighs</p></div></div><div data-id="594" class="red-flag-detail"><p data-id="595" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="596" class="text-teal">Action:</strong> Possible Cauda Equina Syndrome → Emergent MRI, surgical consultation</p></div></button>
+                    <button type="button" data-id="597" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="1" aria-expanded="false"><div data-id="598" class="flex items-start gap-2"><span data-id="599" class="text-pathred font-bold text-lg">🔴</span><div data-id="600"><p data-id="601" class="text-sm font-semibold">Bowel/Bladder Dysfunction</p><p data-id="602" class="text-xs text-txt-muted">Incontinence or urinary retention</p></div></div><div data-id="603" class="red-flag-detail"><p data-id="604" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="605" class="text-teal">Action:</strong> Possible Cauda Equina Syndrome → Emergent MRI, surgical consultation</p></div></button>
+                    <button type="button" data-id="606" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="2" aria-expanded="false"><div data-id="607" class="flex items-start gap-2"><span data-id="608" class="text-pathred font-bold text-lg">🔴</span><div data-id="609"><p data-id="610" class="text-sm font-semibold">Progressive Neuro Deficits</p><p data-id="611" class="text-xs text-txt-muted">Worsening weakness or sensory loss</p></div></div><div data-id="612" class="red-flag-detail"><p data-id="613" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="614" class="text-teal">Action:</strong> Urgent MRI to evaluate for cord/nerve root compression</p></div></button>
+                    <button type="button" data-id="615" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="3" aria-expanded="false"><div data-id="616" class="flex items-start gap-2"><span data-id="617" class="text-pathred font-bold text-lg">🔴</span><div data-id="618"><p data-id="619" class="text-sm font-semibold">Fever with Back Pain</p><p data-id="620" class="text-xs text-txt-muted">Systemic infection concern</p></div></div><div data-id="621" class="red-flag-detail"><p data-id="622" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="623" class="text-teal">Action:</strong> Evaluate for epidural abscess or osteomyelitis → Labs, MRI, blood cultures</p></div></button>
+                    <button type="button" data-id="624" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="4" aria-expanded="false"><div data-id="625" class="flex items-start gap-2"><span data-id="626" class="text-pathred font-bold text-lg">🔴</span><div data-id="627"><p data-id="628" class="text-sm font-semibold">History of Cancer</p><p data-id="629" class="text-xs text-txt-muted">Metastatic disease concern</p></div></div><div data-id="630" class="red-flag-detail"><p data-id="631" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="632" class="text-teal">Action:</strong> Imaging to rule out metastatic spinal disease; oncology referral</p></div></button>
+                    <button type="button" data-id="633" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="5" aria-expanded="false"><div data-id="634" class="flex items-start gap-2"><span data-id="635" class="text-pathred font-bold text-lg">🔴</span><div data-id="636"><p data-id="637" class="text-sm font-semibold">Unexplained Weight Loss</p><p data-id="638" class="text-xs text-txt-muted">Systemic cause must be ruled out</p></div></div><div data-id="639" class="red-flag-detail"><p data-id="640" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="641" class="text-teal">Action:</strong> Comprehensive workup including labs, imaging; evaluate for malignancy</p></div></button>
+                    <button type="button" data-id="642" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="6" aria-expanded="false"><div data-id="643" class="flex items-start gap-2"><span data-id="644" class="text-pathred font-bold text-lg">🔴</span><div data-id="645"><p data-id="646" class="text-sm font-semibold">Significant Trauma</p><p data-id="647" class="text-xs text-txt-muted">MVA or fall from height</p></div></div><div data-id="648" class="red-flag-detail"><p data-id="649" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="650" class="text-teal">Action:</strong> X-ray/CT to rule out fracture; assess for spinal instability</p></div></button>
+                    <button type="button" data-id="651" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="7" aria-expanded="false"><div data-id="652" class="flex items-start gap-2"><span data-id="653" class="text-pathred font-bold text-lg">🔴</span><div data-id="654"><p data-id="655" class="text-sm font-semibold">Age >50 + Osteoporosis Risk</p><p data-id="656" class="text-xs text-txt-muted">New-onset back pain</p></div></div><div data-id="657" class="red-flag-detail"><p data-id="658" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="659" class="text-teal">Action:</strong> Imaging to evaluate for compression fracture; DEXA scan</p></div></button>
+                    <button type="button" data-id="660" class="red-flag-card bg-navy-card rounded-xl p-4 border-l-4 border-pathred" data-rf="8" aria-expanded="false"><div data-id="661" class="flex items-start gap-2"><span data-id="662" class="text-pathred font-bold text-lg">🔴</span><div data-id="663"><p data-id="664" class="text-sm font-semibold">IV Drug Use / Immunosuppression</p><p data-id="665" class="text-xs text-txt-muted">Increased infection risk</p></div></div><div data-id="666" class="red-flag-detail"><p data-id="667" class="text-xs text-txt-muted mt-2 pt-2 border-t border-white/5"><strong data-id="668" class="text-teal">Action:</strong> Low threshold for MRI; evaluate for discitis/osteomyelitis; infectious workup</p></div></button>
+                </div>
+                <div data-id="669" class="flex flex-wrap gap-3">
+                    <button data-id="670" class="btn-ghost back-btn" data-to="8"> Back</button>
+                    <button data-id="672" class="btn-primary nav-btn" data-to="10">Reflection Prompts </button>
+                </div>
+            </section>
+
+            <!-- SCREEN 10: REFLECTION -->
+            <section data-id="674" id="screen-10" class="screen" tabindex="-1" aria-hidden="true">
+                <div data-id="675" class="mb-6"><span data-id="676" class="doc-badge">Final Debrief — Reflection</span></div>
+                <h2 data-id="677" class="text-xl md:text-2xl font-bold mb-2">Post-Case Reflection Prompts</h2>
+                <p data-id="678" class="text-sm text-txt-muted mb-6">Use one or more of these for your graded discussion post or written reflection (200–300 words):</p>
+                <div data-id="679" class="space-y-4 mb-6">
+                    <div data-id="680" class="bg-navy-card rounded-2xl p-5 border border-white/5"><div data-id="681" class="flex items-start gap-4"><span data-id="682" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">1</span><p data-id="683" class="text-sm leading-relaxed">Describe one thing you would do differently after completing this vignette. Justify your answer using clinical evidence.</p></div></div>
+                    <div data-id="684" class="bg-navy-card rounded-2xl p-5 border border-white/5"><div data-id="685" class="flex items-start gap-4"><span data-id="686" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">2</span><p data-id="687" class="text-sm leading-relaxed">How did Joe's patient expectations and anxiety influence your decision-making? How do you balance patient preferences with evidence-based practice?</p></div></div>
+                    <div data-id="688" class="bg-navy-card rounded-2xl p-5 border border-white/5"><div data-id="689" class="flex items-start gap-4"><span data-id="690" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">3</span><p data-id="691" class="text-sm leading-relaxed">What communication strategies would you use to explain why imaging was NOT ordered to a patient who is requesting it?</p></div></div>
+                    <div data-id="692" class="bg-navy-card rounded-2xl p-5 border border-white/5"><div data-id="693" class="flex items-start gap-4"><span data-id="694" class="w-8 h-8 rounded-full bg-teal/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-teal">4</span><p data-id="695" class="text-sm leading-relaxed">How does early patient education and reassurance contribute to better outcomes in musculoskeletal conditions?</p></div></div>
+                </div>
+                <div data-id="696" class="bg-teal/10 border border-teal/30 rounded-xl p-5 mb-6">
+                    <p data-id="697" class="text-sm"><span data-id="698" class="mr-1">📌</span> <strong data-id="699" class="text-teal">INSTRUCTOR NOTE:</strong> <span data-id="700" class="text-txt-muted">Consider assigning a 200–300 word reflection based on Prompt 3 or 4 as a graded post-case activity in Blackboard Ultra. Suggested rubric: clinical reasoning, communication strategy, use of evidence, and professional tone.</span></p>
+                </div>
+                <!-- References Accordion -->
+                <div data-id="701" class="accordion-item bg-navy-deep rounded-xl overflow-hidden mb-8">
+                    <button data-id="702" aria-expanded="false" class="accordion-toggle w-full flex items-center justify-between p-4 text-left text-sm font-semibold"><span data-id="703">Evidence-Based References</span></button>
+                    <div data-id="706" class="accordion-content px-4 text-sm text-txt-muted">
+                        <ol data-id="707" class="list-decimal pl-5 space-y-2 pb-4">
+                            <li data-id="708">Qaseem A, et al. (2017). Noninvasive Treatments for Acute, Subacute, and Chronic Low Back Pain: A Clinical Practice Guideline From the American College of Physicians. <em data-id="709">Ann Intern Med</em>, 166(7), 514–530.</li>
+                            <li data-id="710">Chou R, et al. (2011). Imaging Strategies for Low-Back Pain: Systematic Review and Meta-Analysis. <em data-id="711">The Lancet</em>, 373(9662), 463–472.</li>
+                            <li data-id="712">National Institute of Neurological Disorders and Stroke (NINDS). Low Back Pain Fact Sheet.</li>
+                            <li data-id="713">Agency for Healthcare Research and Quality (AHRQ). Treatment of Nonspecific Low Back Pain. Comparative Effectiveness Review.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div data-id="714" class="text-center mb-6">
+                    <div data-id="715" class="inline-flex items-center gap-3 bg-pathgreen/10 border border-pathgreen/30 rounded-2xl px-8 py-4 mb-4">
+                        
+                        <div data-id="717" class="text-left">
+                            <p data-id="718" class="text-lg font-bold text-pathgreen">Case Complete!</p>
+                            <p data-id="719" id="final-path-label-f3z9" class="text-sm text-txt-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                <div data-id="720" class="flex justify-center">
+                    <button data-id="721" id="btn-restart-v7w1" class="btn-ghost"> Restart Case</button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+
+        // ===== STATE =====
+        let currentScreen = '0';
+        let chosenPath = null;
+        const visitedScreens = new Set();
+
+        // Screen flow map
+        const screenOrder = {
+            '0': null,
+            '1': '0', '2': '1', '3': '2',
+            '4a': '3', '4b': '4a',
+            '5a': '3', '5b': '5a',
+            '6a': '3', '6b': '6a',
+            '7': null, '8': '7', '9': '8', '10': '9'
+        };
+
+        // Progress calculation
+        function getProgress(screen) {
+            const flows = {
+                A: ['0','1','2','3','4a','4b','7','8','9','10'],
+                B: ['0','1','2','3','5a','5b','7','8','9','10'],
+                C: ['0','1','2','3','6a','6b','7','8','9','10'],
+            };
+            const flow = chosenPath ? flows[chosenPath] : ['0','1','2','3','?','?','7','8','9','10'];
+            const idx = flow.indexOf(screen);
+            if (idx === -1) return 0;
+            return Math.round((idx / (flow.length - 1)) * 100);
+        }
+
+        // Progress dots: 5 phases
+        function getPhase(screen) {
+            if (screen === '0') return 0;
+            if (['1','2'].includes(screen)) return 1;
+            if (screen === '3') return 2;
+            if (['4a','4b','5a','5b','6a','6b'].includes(screen)) return 3;
+            return 4;
+        }
+
+        function renderDots() {
+            const phase = getPhase(currentScreen);
+            const container = document.getElementById('progress-dots-c7m2');
+            container.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                if (i < phase) dot.classList.add('completed');
+                else if (i === phase) dot.classList.add('active');
+                else dot.classList.add('future');
+                dot.setAttribute('aria-hidden','true');
+                container.appendChild(dot);
+            }
+        }
+
+        function renderPathBadge() {
+            const el = document.getElementById('path-badge-p3k1');
+            if (!chosenPath) { el.classList.add('hidden'); return; }
+            el.classList.remove('hidden');
+            const cfg = { A: { bg:'bg-pathgreen/20', text:'text-pathgreen', label:'Path 2A ✓' }, B: { bg:'bg-pathamber/20', text:'text-pathamber', label:'Path 2B ✓' }, C: { bg:'bg-pathred/20', text:'text-pathred', label:'Path 2C ✓' } };
+            const c = cfg[chosenPath];
+            el.className = `badge-chip ${c.bg} ${c.text}`;
+            el.textContent = c.label;
+        }
+
+        function updateHeader() {
+            const labels = {
+                '0': '', '1': 'Document 1', '2': 'Document 1', '3': 'Decision Point',
+                '4a': 'Path 2A', '4b': 'Path 2A', '5a': 'Path 2B', '5b': 'Path 2B',
+                '6a': 'Path 2C', '6b': 'Path 2C', '7': 'Final Debrief', '8': 'Final Debrief',
+                '9': 'Final Debrief', '10': 'Final Debrief'
+            };
+            document.getElementById('header-doc-label-d9f2').textContent = labels[currentScreen] || '';
+            document.getElementById('progress-bar-b4n1').style.width = getProgress(currentScreen) + '%';
+            renderDots();
+            renderPathBadge();
+            const flows = {A:['0','1','2','3','4a','4b','7','8','9','10'],B:['0','1','2','3','5a','5b','7','8','9','10'],C:['0','1','2','3','6a','6b','7','8','9','10']};
+            const flow = chosenPath ? flows[chosenPath] : ['0','1','2','3','4a','4b','7','8','9','10'];
+            const idx = Math.max(0, flow.indexOf(currentScreen));
+            const ps = document.getElementById('progress-status');
+            if (ps) ps.textContent = `Step ${idx + 1} of ${flow.length}`;
+        }
+
+        function highlightChosenColumn() {
+            ['a','b','c'].forEach(letter => {
+                const col = document.getElementById(`col-${letter}-${{a:'h8k2',b:'m3j7',c:'n1q5'}[letter]}`);
+                const pathLetter = letter.toUpperCase();
+                if (chosenPath === pathLetter) {
+                    col.classList.add('highlight-col');
+                    for (let i = 1; i <= 5; i++) {
+                        const cell = document.getElementById(`cell-${letter}${i}`);
+                        if (cell) cell.classList.add('highlight-col');
+                    }
+                } else {
+                    col.classList.remove('highlight-col');
+                    for (let i = 1; i <= 5; i++) {
+                        const cell = document.getElementById(`cell-${letter}${i}`);
+                        if (cell) cell.classList.remove('highlight-col');
+                    }
+                }
+            });
+        }
+
+        function navigateTo(screen) {
+            const cur = document.getElementById(`screen-${currentScreen}`);
+            if (cur) {
+                cur.classList.remove('active');
+                cur.setAttribute('aria-hidden', 'true');
+            }
+            currentScreen = screen;
+            visitedScreens.add(screen);
+            const next = document.getElementById(`screen-${screen}`);
+            if (next) {
+                next.classList.add('active');
+                next.setAttribute('aria-hidden', 'false');
+            }
+            updateHeader();
+            if (screen === '7') highlightChosenColumn();
+            if (screen === '10') {
+                const lbl = document.getElementById('final-path-label-f3z9');
+                const pathLabels = { A: 'You chose Path 2A — Conservative Management', B: 'You chose Path 2B — Imaging First', C: 'You chose Path 2C — Rest and Return' };
+                lbl.textContent = chosenPath ? pathLabels[chosenPath] : '';
+            }
+            if (next) {
+                const heading = next.querySelector('h1, h2, h3');
+                const focusTarget = heading || next;
+                if (!focusTarget.hasAttribute('tabindex')) focusTarget.setAttribute('tabindex', '-1');
+                focusTarget.focus({ preventScroll: true });
+                const status = document.getElementById('sr-status');
+                if (status) status.textContent = heading ? `Now showing: ${heading.textContent.trim()}` : 'New vignette screen loaded';
+            }
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+
+        function choosePath(path) {
+            chosenPath = path;
+            const cardIds = { A: 'card-a-r4m2', B: 'card-b-k8n3', C: 'card-c-j5p7' };
+            const card = document.getElementById(cardIds[path]);
+            card.classList.add('selected-ring');
+
+            // Add shimmer
+            const shimmer = document.createElement('div');
+            shimmer.className = 'shimmer-overlay';
+            card.style.position = 'relative';
+            card.appendChild(shimmer);
+
+            // Disable all path buttons
+            document.querySelectorAll('.path-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+            });
+
+            const screenMap = { A: '4a', B: '5a', C: '6a' };
+            setTimeout(() => {
+                shimmer.remove();
+                navigateTo(screenMap[path]);
+            }, 500);
+        }
+
+        // ===== EVENT LISTENERS =====
+
+        // Begin button
+        document.getElementById('btn-begin-x2k9').addEventListener('click', () => navigateTo('1'));
+
+        // Nav buttons
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => navigateTo(btn.dataset.to));
+        });
+
+        // Back buttons
+        document.querySelectorAll('.back-btn').forEach(btn => {
+            btn.addEventListener('click', () => navigateTo(btn.dataset.to));
+        });
+
+        // Path choice buttons
+        document.querySelectorAll('.path-btn').forEach(btn => {
+            btn.addEventListener('click', () => choosePath(btn.dataset.path));
+        });
+
+        // Restart
+        document.getElementById('btn-restart-v7w1').addEventListener('click', () => {
+            chosenPath = null;
+            visitedScreens.clear();
+            // Re-enable path buttons
+            document.querySelectorAll('.path-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            });
+            // Remove selected ring from cards
+            document.querySelectorAll('.selected-ring').forEach(el => el.classList.remove('selected-ring'));
+            navigateTo('0');
+        });
+
+        // Accordions
+        document.querySelectorAll('.accordion-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const content = toggle.nextElementSibling;
+                const icon = toggle.querySelector('[data-lucide="chevron-down"]');
+                content.classList.toggle('open');
+                toggle.setAttribute('aria-expanded', content.classList.contains('open') ? 'true' : 'false');
+                if (icon) {
+                    icon.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+                }
+            });
+        });
+
+        // Red flag cards
+        document.querySelectorAll('.red-flag-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const detail = card.querySelector('.red-flag-detail');
+                if (detail) {
+                    detail.classList.toggle('open');
+                    card.setAttribute('aria-expanded', detail.classList.contains('open') ? 'true' : 'false');
+                }
+            });
+        });
+
+        // ===== INIT =====
+        navigateTo('0');
+    </script>
+</div>
